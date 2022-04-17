@@ -98,9 +98,29 @@ SELECT good_name FROM Goods WHERE Goods.good_id NOT IN (SELECT good FROM Payment
 
 *Выведите список комнат (все поля, таблица Rooms), которые по своим удобствам (has_tv, has_internet, has_kitchen, has_air_con) 
 совпадают с комнатой с идентификатором "11".*
-SELECT *
-FROM Rooms
+SELECT * FROM Rooms
 WHERE (has_tv, has_internet, has_kitchen, has_air_con) = 
     (   SELECT has_tv, has_internet, has_kitchen, has_air_con
         FROM Rooms WHERE id = 11
     );
+    
+*Измените запрос так, чтобы удалить товары (Goods), имеющие тип деликатесов (delicacies).*
+DELETE Goods FROM Goods JOIN GoodTypes ON Goods.type = GoodTypes.good_type_id WHERE GoodTypes.good_type_name = "delicacies"
+
+*Выведите имена (поле member_name) всех членом семьи (таблица FamilyMembers) в верхнем регистре. Для вывода имени используйте псевдоним name.*
+SELECT UPPER(member_name) as name FROM FamilyMembers
+
+*Выведите идентификаторы (поле good_id) всех товаров, дополнив идентификаторы незначащими нолями слева до 2-х знаков.*
+SELECT LPAD(good_id,2,0) as ids FROM Goods
+
+*Выведите среднюю стоимость бронирования для комнат, которых бронировали хотя бы один раз. Среднюю стоимость необходимо округлить до целого значения вверх.
+В качестве результата выведите id комнаты и среднюю стоимость бронирования (используйте псевдоним avg_price).*
+SELECT room_id, CEILING(AVG(price)) AS avg_price FROM Reservations GROUP BY room_id
+
+*Выведите id тех комнат, которые арендовали нечетное количество раз.
+В качестве результата выведите id комнаты и количество раз сколько ее брали в аренду (используйте псевдоним count).*
+SELECT * FROM (
+    SELECT room_id, COUNT(room_id) AS count 
+    FROM Reservations 
+    GROUP BY room_id) as pt
+WHERE MOD(pt.count, 2) = 1
