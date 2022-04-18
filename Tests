@@ -63,3 +63,19 @@ SELECT Passenger.name, COUNT(passenger) as count FROM Pass_in_trip
 JOIN Passenger ON Pass_in_trip.passenger = Passenger.id
 GROUP BY Passenger
 ORDER BY count DESC, name
+
+*Определить, сколько потратил в 2005 году каждый из членов семьи. Поля в результирующей таблице: member_name,status, costs*
+SELECT FamilyMembers.member_name, FamilyMembers.status, SUM(Payments.unit_price * Payments.amount) as costs 
+FROM Payments JOIN FamilyMembers ON Payments.family_member = FamilyMembers.member_id
+WHERE date BETWEEN '2005-01-01 00:00:00' and '2005-12-31 23:23:59'
+GROUP BY member_name, status
+
+*Узнать, кто старше всех в семьe*
+SELECT member_name FROM FamilyMembers
+WHERE birthday = (SELECT MIN(birthday) FROM FamilyMembers)
+
+*Определить, кто из членов семьи покупал картошку (potato)*
+SELECT DISTINCT status FROM Payments
+JOIN Goods ON Payments.good = Goods.good_id
+JOIN FamilyMembers ON Payments.family_member = FamilyMembers.member_id
+WHERE good_name = 'potato'
