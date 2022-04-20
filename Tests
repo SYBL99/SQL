@@ -79,3 +79,70 @@ SELECT DISTINCT status FROM Payments
 JOIN Goods ON Payments.good = Goods.good_id
 JOIN FamilyMembers ON Payments.family_member = FamilyMembers.member_id
 WHERE good_name = 'potato'
+
+*Сколько и кто из семьи потратил на развлечения (entertainment). Вывести статус в семье, имя, сумму*
+SELECT FamilyMembers.status, FamilyMembers.member_name, Payments.unit_price*Payments.amount as costs FROM GoodTypes
+JOIN Goods ON GoodTypes.good_type_id = Goods.type
+JOIN Payments ON Goods.good_id = Payments.good
+JOIN FamilyMembers ON FamilyMembers.member_id = Payments.family_member
+WHERE  GoodTypes.good_type_name = 'entertainment'
+
+*Определить товары, которые покупали более 1 раза*
+SELECT good_name FROM (
+    SELECT good_name, COUNT(good_name) as count FROM Payments 
+    JOIN Goods ON Payments.good = Goods.good_id
+    GROUP BY good_name) as ct
+WHERE ct.count > 1
+
+*Найти имена всех матерей (mother)*
+SELECT member_name FROM FamilyMembers WHERE status = 'mother'
+
+*Найдите самый дорогой деликатес (delicacies) и выведите его стоимость*
+SELECT good_name, MAX(unit_price) as unit_price FROM Payments 
+JOIN Goods ON Payments.good = Goods.good_id
+JOIN GoodTypes ON GoodTypes.good_type_id = Goods.type
+WHERE good_type_name = 'delicacies'
+GROUP BY good_name
+ORDER BY unit_price 
+DESC LIMIT 1
+
+*Определить кто и сколько потратил в июне 2005. Поля в результирующей таблице: member_name, costs*
+SELECT member_name, (unit_price*amount) as costs FROM (
+    SELECT * FROM Payments 
+    WHERE Payments.date BETWEEN '2005-06-01' AND '2005-06-30' ) as pt
+JOIN FamilyMembers ON pt.family_member = FamilyMembers.member_id
+
+*Определить, какие товары не покупались в 2005 году*
+SELECT good_name FROM Goods WHERE good_id NOT IN (
+    SELECT good FROM Payments
+    WHERE YEAR(date) = 2005)
+    
+*Определить группы товаров, которые не приобретались в 2005 году. Поля в результирующей таблице:good_type_name*
+SELECT GoodTypes.good_type_name FROM GoodTypes 
+WHERE GoodTypes.good_type_name NOT IN (
+    SELECT GoodTypes.good_type_name FROM Payments 
+    JOIN Goods ON Payments.good = Goods.good_id
+    JOIN GoodTypes ON Goods.type = GoodTypes.good_type_id
+    WHERE YEAR(date) = 2005)
+
+*Узнать, сколько потрачено на каждую из групп товаров в 2005 году. Вывести название группы и сумму Поля в результирующей таблице: good_type_name costs*
+SELECT good_type_name, SUM((unit_price*amount)) as costs FROM Payments 
+JOIN Goods ON Payments.good = Goods.good_id
+JOIN GoodTypes ON GoodTypes.good_type_id = Goods.type
+WHERE YEAR(date) = 2005
+GROUP BY good_type_name
+
+*Сколько рейсов совершили авиакомпании с Ростова (Rostov) в Москву (Moscow) ?*
+SELECT COUNT(id) as count FROM Trip WHERE town_from = 'Rostov' AND town_to = 'Moscow'
+
+*Выведите имена пассажиров улетевших в Москву (Moscow) на самолете TU-134*
+SELECT DISTINCT  Passenger.name FROM Pass_in_trip 
+JOIN Passenger ON Pass_in_trip.passenger=Passenger.id
+WHERE trip IN (SELECT id FROM Trip WHERE town_to = 'Moscow' AND plane = 'TU-134')
+
+*Выведите нагруженность (число пассажиров) каждого рейса (trip). Результат вывести в отсортированном виде по убыванию нагруженности.
+Поля в результирующей таблице: trip, count*
+SELECT trip, COUNT(trip) as count FROM Trip 
+JOIN Pass_in_trip ON Pass_in_trip.trip = Trip.id
+GROUP BY trip
+ORDER BY count DESC 
