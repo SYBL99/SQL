@@ -33,7 +33,6 @@ SELECT * FROM Trip
 WHERE time_out BETWEEN '1900-01-01 10:00:00' AND '1900-01-01 14:00:00'
 
 *Вывести пассажиров с самым длинным именем*
-
 SELECT name FROM Passenger ORDER BY LENGTH(name) DESC LIMIT 1
 
 *Вывести id и количество пассажиров для всех прошедших полётов*
@@ -231,3 +230,57 @@ VALUES ((SELECT COUNT(*) FROM GoodTypes as t) + 1, 'auto')
 UPDATE FamilyMembers
 SET member_name = 'Andie Anthony'
 WHERE member_name = 'Andie Quincey'
+
+*Удалить всех членов семьи с фамилией "Quincey".*
+DELETE FROM FamilyMembers
+WHERE member_name LIKE '%Quincey'
+
+*Удалить компании, совершившие наименьшее количество рейсов.*
+DELETE FROM Company 
+WHERE id in (SELECT Trip.company FROM Trip 
+    GROUP BY Trip.company 
+    HAVING COUNT(company) = (SELECT COUNT(company) as count FROM Trip 
+        GROUP BY Trip.company 
+        ORDER BY COUNT(company)
+        LIMIT 1))
+*Удалить все перелеты, совершенные из Москвы (Moscow).*
+DELETE FROM Trip WHERE town_from = 'Moscow'
+
+*Перенести расписание всех занятий на 30 мин. вперед.*
+UPDATE Timepair
+SET start_pair=start_pair + INTERVAL 30 MINUTE, 
+    end_pair=end_pair + INTERVAL 30 MINUTE;
+
+*Добавить отзыв с рейтингом 5 на жилье, находящиеся по адресу "11218, Friel Place, New York", от имени "George Clooney"*
+INSERT INTO Reviews (id, reservation_id, rating)
+VALUES ((SELECT COUNT(*) + 1 FROM Reviews as r) , 
+    (SELECT id FROM Reservations 
+    WHERE user_id = (SELECT id FROM Users WHERE name = 'George Clooney')
+    ORDER BY end_date LIMIT 1), 5)
+
+*Вывести пользователей,указавших Белорусский номер телефона ? Телефонный код Белоруссии +375.*
+SELECT * FROM Users WHERE phone_number LIKE '+375%'
+
+*Выведите идентификаторы преподавателей, которые хотя бы один раз за всё время преподавали в каждом из одиннадцатых классов.*
+SELECT Schedule.teacher FROM Schedule
+JOIN Class ON Schedule.class = Class.id
+WHERE Class.name LIKE '11%'
+GROUP BY Schedule.teacher
+HAVING COUNT(DISTINCT name) = (SELECT COUNT(name) FROM Class 
+    WHERE name LIKE '11%')
+*Выведите список комнат, которые были зарезервированы в течение 12 недели 2020 года.*
+SELECT Rooms.* FROM Rooms 
+JOIN Reservations ON Rooms.id = Reservations.room_id
+WHERE WEEK(start_date, 1) = 12 AND YEAR(start_date) = 2020
+
+*Вывести в порядке убывания популярности доменные имена 2-го уровня, используемые пользователями для электронной почты. 
+Полученный результат необходимо дополнительно отсортировать по возрастанию названий доменных имён. Поля в результирующей таблице:domain, count*
+SELECT SUBSTRING_INDEX(email, '@', -1) as domain, COUNT(SUBSTRING_INDEX(email, '@', -1)) as count
+FROM Users
+GROUP BY domain
+ORDER BY count DESC, domain
+
+*Выведите отсортированный список (по возрастанию) имен студентов в виде Фамилия.И.О.*
+SELECT CONCAT(last_name, '.', LEFT (first_name, 1), '.', LEFT (middle_name, 1), '.') AS name
+FROM Student 
+ORDER BY last_name, first_name, middle_name
